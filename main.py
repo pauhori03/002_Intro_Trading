@@ -4,12 +4,13 @@ Main pipeline orchestrator - runs the complete workflow
 import pandas as pd
 import numpy as np
 import ta
+import os
 from plotting import plot_portfolio_vs_benchmark
 from signals import make_signals
 from backtesting import run_backtest
 from pfmn_metrics import calculate_all_metrics
 # from visualization import plot_results
-from optimization import optimize_strategy, print_optimization_results, split_train_test, evaluate_on_df
+from optimization import optimize_strategy, print_optimization_results, split_train_test, evaluate_on_df, save_best_results
 
 df = pd.read_csv("data/Binance_BTCUSDT_1h.csv")
 df = df.iloc[::-1].reset_index(drop=True)
@@ -51,14 +52,26 @@ study, best_params, (df_train, df_test, df_val) = optimize_strategy(
 )
 print_optimization_results(study)
 
-# Run final backtest with best params on test set
+# Save best params to CSV
+save_best_results(best_params, "data/best_params_optuna.csv")
+best_params_path = "data/best_params_optuna.csv"
+
+if os.path.exists(best_params_path):
+    best_params = pd.read_csv(best_params_path).iloc[0].to_dict()
+    print("\n✅ Best parameters loaded from CSV")
+else:
+    # Si no existe, correr optimización y guardar resultados
+    study, best_params, (df_train, df_test, df_val) = optimize_strategy(df, n_trials=100, n_jobs=1)
+    print_optimization_results(study)
+    save_best_results(best_params, best_params_path)
+
+# Usar los parámetros guardados para backtesting
 df_train, df_test, df_val = split_train_test(df)
-df_holdout = df_test  # o test verdadero
-df_bt_test, cash_test, m_test = evaluate_on_df(df_holdout, best_params)
+df_bt_test, cash_test, m_test = evaluate_on_df(df_test, best_params)
 
 print("\n=== TEST METRICS ===")
 for k, v in m_test.items():
-    if k in ("total_return","max_drawdown","win_rate"): 
+    if k in ("total_return", "max_drawdown", "win_rate"):
         print(f"{k}: {float(v)*100:.2f}%")
     else:
         print(f"{k}: {float(v):.4f}")
@@ -71,5 +84,5 @@ plot_portfolio_vs_benchmark(
     benchmark_col="close",
     normalize=True,
     title="Estrategia vs Buy & Hold (BTC/USDT)",
-    save_path="outputs/plot_perf.png"  # o None si no quieres guardar
+    save_path="outputs/plot_perf.png"
 )

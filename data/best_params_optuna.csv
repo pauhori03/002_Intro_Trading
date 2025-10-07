@@ -1,0 +1,2 @@
+rsi_period,rsi_overbought,rsi_oversold,ema_short,ema_long,bb_window,bb_std,n_shares,stop_loss_pct,take_profit_pct
+17,78,34,18,33,32,2.3000591913036343,4.919297427188288,0.044939488589708435,0.15972352709976498

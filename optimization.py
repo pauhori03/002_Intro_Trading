@@ -1,9 +1,11 @@
 import optuna
+import json
 import numpy as np
 import pandas as pd
 from signals import make_signals
 from backtesting import run_backtest
 from pfmn_metrics import calculate_all_metrics
+
 
 # Split data function
 def split_train_test(df, train_ratio=0.6, test_ratio=0.2, val_ratio=0.2):
@@ -158,6 +160,8 @@ def print_optimization_results(study: optuna.Study):
 
 
 def evaluate_on_df(df, params):
+    # making sure bb_window is int
+    params["bb_window"] = int(float(params["bb_window"]))
     df_sig = make_signals(
         df,
         rsi_period=params['rsi_period'],
@@ -180,4 +184,9 @@ def evaluate_on_df(df, params):
     )
     metrics = calculate_all_metrics(df_bt, risk_free_rate=0.0, bars_per_year=24*365)
     return df_bt, final_capital, metrics
+
+def save_best_results(best_params, file_path="data/best_params_optuna.csv"):
+    import pandas as pd
+    pd.DataFrame([best_params]).to_csv(file_path, index=False)
+    print(f"\nBest parameters saved to {file_path}")
 
