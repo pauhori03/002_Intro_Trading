@@ -7,7 +7,7 @@ import ta
 # from data import load_bitcoin_data
 from signals import make_signals
 from backtesting import run_backtest
-# from metrics import calculate_metrics
+from pfmn_metrics import calculate_all_metrics
 # from visualization import plot_results
 # from optimization import optimize_strategy
 
@@ -33,6 +33,15 @@ df_bt, final_capital = run_backtest(
 
 print(f"Final portfolio value (capital): {final_capital:,.2f}")
 print(df_bt[["date", "close", "portfolio_value"]].tail())
+
+# Calculate performance metrics
+metrics = calculate_all_metrics(df_bt, risk_free_rate=0.0, bars_per_year=24 * 365)
+
+print("PERFORMANCE SUMMARY")
+print("-" * 40)
+for k, v in metrics.items():
+    print(f"{k}: {v}")
+
 
 # def main():
 # """
