@@ -10,7 +10,7 @@ class Position:
     sl: float
     tp: float
 
-def run_backtest(df, stop_loss=0.02, take_profit=0.04, n_shares=1.0,
+def run_backtest(df, stop_loss=0.02, take_profit=0.04, n_shares=1,
                  com=0.125/100, borrow_rate=0.25/100,
                  price_col="close", initial_cash=1_000_000):
 
@@ -68,20 +68,22 @@ def run_backtest(df, stop_loss=0.02, take_profit=0.04, n_shares=1.0,
 
         # ---- OPEN LONG ----
         if signal == 1 and len(active_short) == 0:
-            cost = price * n_shares * (1 + FEE_LONG)
+            n_shares_dynamic = max(1, (cash * 0.02) / price)
+            cost = price * n_shares_dynamic * (1 + FEE_LONG)
             if cash > cost:
                 cash -= cost
-                pos = Position("long", n_shares, price,
+                pos = Position("long", n_shares_dynamic, price,
                                price * (1 - stop_loss),
                                price * (1 + take_profit))
                 active_long.append(pos)
 
         # ---- OPEN SHORT ----
         if signal == -1 and len(active_long) == 0:
-            cost = price * n_shares * (1 + FEE_SHORT)
+            n_shares_dynamic = max(1, (cash * 0.02) / price)
+            cost = price * n_shares_dynamic * (1 + FEE_SHORT)
             if cash > cost:
                 cash -= cost
-                pos = Position("short", n_shares, price,
+                pos = Position("short", n_shares_dynamic, price,
                                price * (1 + stop_loss),   # SL arriba
                                price * (1 - take_profit)) # TP abajo
                 active_short.append(pos)

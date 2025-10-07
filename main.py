@@ -4,12 +4,11 @@ Main pipeline orchestrator - runs the complete workflow
 import pandas as pd
 import numpy as np
 import ta
-# from data import load_bitcoin_data
 from signals import make_signals
 from backtesting import run_backtest
 from pfmn_metrics import calculate_all_metrics
 # from visualization import plot_results
-# from optimization import optimize_strategy
+from optimization import optimize_strategy, print_optimization_results, split_train_test, evaluate_on_df
 
 df = pd.read_csv("data/Binance_BTCUSDT_1h.csv")
 df = df.iloc[::-1].reset_index(drop=True)
@@ -42,6 +41,26 @@ print("-" * 40)
 for k, v in metrics.items():
     print(f"{k}: {v}")
 
+# Run optimization
+study, best_params, (df_train, df_test, df_val) = optimize_strategy(
+    df,           # pásale el DF crudo (sin señales)
+    n_trials=120, # > 50 like you asked
+    n_jobs=1      # pon >1 si tu entorno lo soporta
+)
+print_optimization_results(study)
+
+# Run final backtest with best params on test set
+df_train, df_test, df_val = split_train_test(df)
+df_holdout = df_test  # o test verdadero
+df_bt_test, cash_test, m_test = evaluate_on_df(df_holdout, best_params)
+
+print("\n=== TEST METRICS ===")
+for k, v in m_test.items():
+    if k in ("total_return","max_drawdown","win_rate"): 
+        print(f"{k}: {float(v)*100:.2f}%")
+    else:
+        print(f"{k}: {float(v):.4f}")
+print(f"Final portfolio (test): {cash_test:,.2f}")
 
 # def main():
 # """
