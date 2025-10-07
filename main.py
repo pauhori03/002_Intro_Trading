@@ -6,7 +6,7 @@ import numpy as np
 import ta
 # from data import load_bitcoin_data
 from signals import make_signals
-# from backtest import run_backtest
+from backtesting import run_backtest
 # from metrics import calculate_metrics
 # from visualization import plot_results
 # from optimization import optimize_strategy
@@ -18,7 +18,22 @@ print(df.head())
 
 # Generate buy/sell signals
 df_signals = make_signals(df)
-print(df_signals.head(20))
+
+# Run backtest
+df_bt, final_capital = run_backtest(
+    df_signals,
+    stop_loss=0.02,
+    take_profit=0.04,
+    n_shares=1,
+    com=0.125/100,
+    borrow_rate=0.25/100,
+    price_col="close",
+    initial_cash=1_000_000
+)
+
+print(f"Final portfolio value (capital): {final_capital:,.2f}")
+print(df_bt[["date", "close", "portfolio_value"]].tail())
+
 # def main():
 # """
 #     Main pipeline execution
